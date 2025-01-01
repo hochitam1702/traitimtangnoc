@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moving Heart Animation</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="heartCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("heartCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const points = [];
+    const totalPoints = 300; // Số lượng điểm trong trái tim
+    const maxLineLength = 150; // Độ dài tối đa để nối các điểm
+    const speed = 0.3; // Tốc độ chuyển động của các điểm
+    let centerX = canvas.width / 2; // Tọa độ x của tâm trái tim
+    let centerY = canvas.height / 2; // Tọa độ y của tâm trái tim
+    let angle = 0; // Góc để điều chỉnh vị trí di chuyển
+
+    // Hàm tính tọa độ trái tim
+    function heartShape(t) {
+      return {
+        x: 16 * Math.pow(Math.sin(t), 3),
+        y: -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)),
+      };
+    }
+
+    // Tạo các điểm ban đầu
+    for (let i = 0; i < totalPoints; i++) {
+      const t = (Math.PI * 2 * i) / totalPoints;
+      const pos = heartShape(t);
+      points.push({
+        x: pos.x * 20, // Tọa độ x gốc
+        y: pos.y * 20, // Tọa độ y gốc
+        vx: Math.random() * speed - speed / 2, // Tốc độ ngẫu nhiên theo x
+        vy: Math.random() * speed - speed / 2, // Tốc độ ngẫu nhiên theo y
+      });
+    }
+
+    // Hàm vẽ trái tim
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Điều chỉnh vị trí trung tâm để trái tim di chuyển
+      centerX = canvas.width / 2 + Math.sin(angle) * 100;
+      centerY = canvas.height / 2 + Math.cos(angle) * 50;
+      angle += 0.02;
+
+      // Nối các điểm
+      for (let i = 0; i < points.length; i++) {
+        for (let j = i + 1; j < points.length; j++) {
+          const dx = (centerX + points[i].x) - (centerX + points[j].x);
+          const dy = (centerY + points[i].y) - (centerY + points[j].y);
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < maxLineLength) {
+            const opacity = 1 - dist / maxLineLength;
+            ctx.beginPath();
+            ctx.moveTo(centerX + points[i].x, centerY + points[i].y);
+            ctx.lineTo(centerX + points[j].x, centerY + points[j].y);
+            ctx.strokeStyle = `rgba(255, 0, 0, ${opacity})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Vẽ các điểm
+      points.forEach((point) => {
+        ctx.beginPath();
+        ctx.arc(centerX + point.x, centerY + point.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 0, 0, 1)";
+        ctx.fill();
+
+        // Cập nhật vị trí điểm (điểm chuyển động nhẹ)
+        point.x += point.vx;
+        point.y += point.vy;
+
+        // Phản xạ nếu chạm vào giới hạn của trái tim
+        if (Math.abs(point.x) > 20 * 16) point.vx *= -1;
+        if (Math.abs(point.y) > 20 * 13) point.vy *= -1;
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  </script>
+</body>
+</html>
